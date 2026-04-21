@@ -64,7 +64,7 @@
         .option-btn:hover { border-color: var(--primary); background: #f0fdf4; transform: scale(1.02); }
         .option-btn.correct-flash { background: var(--success) !important; color: white !important; border-color: var(--primary-dark) !important; }
         
-        /* Character Slots for Fill-in-the-blank */
+        /* Fill-in-the-blank */
         .fill-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0; }
         .char-input {
             width: 45px; height: 55px; border: 3px solid var(--border); border-radius: 12px;
@@ -74,13 +74,12 @@
         .char-input:focus { border-color: var(--primary); background: #f0fdf4; transform: translateY(-3px); }
         .char-space { width: 20px; }
 
-        /* Drag & Drop / Sorting UI */
+        /* Drag & Drop */
         .sortable-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .sort-item {
             padding: 15px; background: #fff; border: 2px dashed var(--primary); border-radius: 15px;
             cursor: grab; display: flex; align-items: center; gap: 10px; font-weight: 600; transition: 0.2s;
         }
-        .sort-item:active { cursor: grabbing; transform: scale(0.98); }
 
         /* Classification UI */
         .classify-container { display: flex; gap: 15px; margin-top: 20px; }
@@ -88,7 +87,6 @@
             flex: 1; min-height: 120px; background: #f9fafb; border: 2px solid var(--border); 
             border-radius: 20px; padding: 15px; text-align: center; transition: 0.3s;
         }
-        .classify-zone.filled { background: #ecfdf5; border-color: var(--primary); }
         .classify-item { 
             display: inline-block; padding: 10px 15px; background: var(--primary); color: white; 
             border-radius: 12px; margin: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 700;
@@ -112,7 +110,6 @@
             transition: 0.2s; font-size: 1.1rem;
         }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0px var(--primary-dark); }
-        .btn:active { transform: translateY(4px); box-shadow: 0 2px 0px var(--primary-dark); }
 
         .map-node { 
             background: white; padding: 25px; border-radius: 30px; border: 3px solid var(--border); 
@@ -128,7 +125,6 @@
             font-size: 1.1rem; text-align: center; outline: none; transition: 0.3s; color: var(--primary-dark);
             font-weight: 700;
         }
-        input[type="text"].auth-input:focus { border-color: var(--primary); background: #f0fdf4; }
     </style>
 </head>
 <body>
@@ -138,25 +134,25 @@
         <div class="hud-item">💎 <span id="hud-score">0</span> XP</div>
     </div>
 
-    <!-- Màn hình chào mừng -->
+    <!-- Auth -->
     <div id="auth-screen" class="container" style="display: block; margin-top: 10vh;">
         <div class="card" style="text-align: center;">
             <div style="font-size: 5rem; margin-bottom: 10px;">🎮</div>
             <h1 style="margin-bottom: 5px; color: var(--primary-dark); font-size: 2rem;">CYBER QUEST 9.0</h1>
             <p style="margin-bottom: 30px; font-weight: 600; color: #666;">Chinh phục Tin học cực chill cùng chúng mình! ✨</p>
-            <input type="text" id="p-name" class="auth-input" placeholder="Hãy điền tên của bạn..." autocomplete="off">
+            <input type="text" id="p-name" class="auth-input" placeholder="Điền tên của bạn..." autocomplete="off">
             <button class="btn" style="margin-top: 20px;" onclick="startGame()">KHÁM PHÁ NGAY 🚀</button>
         </div>
     </div>
 
-    <!-- Bản đồ thử thách -->
+    <!-- Map -->
     <div id="map-screen" class="container">
         <h2 style="margin-bottom: 25px; text-align: center; font-size: 1.8rem;">Lộ Trình Giải Đố 🗺️</h2>
         <p style="text-align: center; margin-bottom: 20px; font-weight: 600; color: var(--primary-dark);">Vượt qua 70% số câu mỗi ải để mở khóa ải tiếp theo nhé!</p>
         <div id="map-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px;"></div>
     </div>
 
-    <!-- Màn hình câu hỏi -->
+    <!-- Quiz -->
     <div id="quiz-screen" class="container">
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
@@ -171,80 +167,77 @@
         </div>
     </div>
 
-    <!-- Phân tích lỗi (Modal khi sai) -->
+    <!-- Feedback Modal -->
     <div id="feedback-modal" class="modal-overlay">
         <div class="modal-card">
             <div id="modal-icon" style="font-size: 3rem; margin-bottom: 10px;">🔍</div>
             <h2 id="modal-title" style="color: var(--danger); margin-bottom: 10px;">Ồ! Cần xem lại rồi...</h2>
             <div id="modal-correct-ans" class="correct-box"></div>
             <div id="modal-exp" class="exp-box"></div>
-            <button class="btn" id="modal-btn" style="margin-top: 25px;" onclick="closeFeedback()">ĐÃ HIỂU, TIẾP TỤC THÔI! 💪</button>
+            <button class="btn" id="modal-btn" style="margin-top: 25px;" onclick="closeFeedback()">TIẾP TỤC 💪</button>
         </div>
     </div>
 
     <script>
-        const removeAccents = (str) => {
-            return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
-        };
+        const removeAccents = (str) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
 
-        // Helper function to create dummy questions for demo if needed
-        function createDummyQuestions(count, base) {
+        // Helper to fill up questions
+        function createQuestions(count, base) {
             let arr = [...base];
             while(arr.length < count) {
                 arr.push({ 
                     type: "mcq", 
-                    q: `Câu hỏi bổ sung số ${arr.length + 1}: Chức năng của máy tính là gì?`, 
-                    options: ["Xử lý thông tin", "Nấu cơm", "Tưới cây"], 
+                    q: `Câu hỏi ôn tập ${arr.length + 1}: Để tính tổng các giá trị trong Excel, ta dùng hàm?`, 
+                    options: ["SUM", "AVERAGE", "MIN", "MAX"], 
                     correct: 0, 
-                    exp: "Máy tính dùng để xử lý dữ liệu và thông tin tự động nhé!" 
+                    exp: "Hàm SUM là hàm cơ bản nhất để cộng các con số lại với nhau nè!" 
                 });
             }
             return arr.slice(0, count);
         }
 
         const BASE_Q1 = [
-            { type: "mcq", q: "Bước đầu tiên trong quy trình giải bài toán trên máy tính là gì?", options: ["Xác định bài toán", "Viết chương trình", "Xây dựng thuật toán"], correct: 0, exp: "Chúng mình phải biết bài toán yêu cầu gì (Input/Output) trước khi làm các bước khác nhé! ✨" },
-            { type: "fill", q: "Sau khi xác định bài toán, chúng ta cần xây dựng _______.", correct: "thuật toán", exp: "Thuật toán chính là 'bí kíp' các bước để giải quyết vấn đề đó! 📜" },
-            { type: "sort", q: "Sắp xếp các bước giải bài toán theo đúng thứ tự chuẩn nhé:", items: ["Viết chương trình", "Xây dựng thuật toán", "Xác định bài toán", "Chạy thử & Kiểm lỗi"], correctOrder: ["Xác định bài toán", "Xây dựng thuật toán", "Viết chương trình", "Chạy thử & Kiểm lỗi"], exp: "Quy trình 4 bước thần thánh: Xác định -> Thuật toán -> Lập trình -> Test. Nhớ kỹ nha! 🧠" },
-            { type: "classify", q: "Phân loại Input và Output của bài toán 'Tính diện tích hình chữ nhật':", pool: ["Chiều dài a", "Chiều rộng b", "Diện tích S", "Chu vi P"], zones: { "Input": ["Chiều dài a", "Chiều rộng b"], "Output": ["Diện tích S"] }, exp: "Cần a và b để tính, kết quả trả về là S. Chu vi P không liên quan ở đây nè! 📏" },
-            { type: "mcq", q: "Viết chương trình là việc sử dụng ngôn ngữ gì để diễn tả thuật toán?", options: ["Ngôn ngữ tự nhiên", "Ngôn ngữ lập trình", "Ngôn ngữ cơ thể"], correct: 1, exp: "Máy tính chỉ hiểu các ngôn ngữ lập trình như Pascal, Python hay C++ thôi! 💻" },
-            { type: "fill", q: "Bước cuối cùng của quy trình là chạy thử và _______ lỗi.", correct: "kiểm", exp: "Viết xong rồi phải kiểm tra xem có lỗi (bug) nào không thì mới dùng được chứ! 🐞" },
-            { type: "mcq", q: "Input của bài toán 'Tìm số lớn nhất trong 2 số a và b' là gì?", options: ["Số a và b", "Số lớn nhất", "Tổng a + b"], correct: 0, exp: "Đầu vào là 2 số cần so sánh nhé! 🔢" },
-            { type: "fill", q: "Cách mô tả thuật toán bằng hình vẽ gọi là sơ đồ _______.", correct: "khối", exp: "Sơ đồ khối giúp chúng mình nhìn thuật toán một cách trực quan bằng hình ảnh! 🖼️" },
-            { type: "mcq", q: "Thuật toán dừng lại khi nào?", options: ["Khi tìm ra kết quả", "Khi hết thời gian", "Khi máy tính bị tắt"], correct: 0, exp: "Một thuật toán đúng phải có tính hữu hạn, nghĩa là phải dừng và cho kết quả! ✅" },
-            { type: "fill", q: "Tính chất của thuật toán: Một dãy _______ các thao tác.", correct: "hữu hạn", exp: "Dãy phải có điểm dừng, không thể chạy mãi mãi được đâu! ⏳" }
+            { type: "mcq", q: "Bước đầu tiên trong quy trình giải bài toán trên máy tính là gì?", options: ["Xác định bài toán", "Viết chương trình", "Xây dựng thuật toán"], correct: 0, exp: "Xác định Input/Output là quan trọng nhất!" },
+            { type: "fill", q: "Sau khi xác định bài toán, chúng ta cần xây dựng _______.", correct: "thuật toán", exp: "Thuật toán là các bước để giải quyết vấn đề." },
+            { type: "sort", q: "Sắp xếp đúng quy trình giải bài toán:", items: ["Viết chương trình", "Xây dựng thuật toán", "Xác định bài toán", "Kiểm lỗi"], correctOrder: ["Xác định bài toán", "Xây dựng thuật toán", "Viết chương trình", "Kiểm lỗi"], exp: "Xác định -> Thuật toán -> Code -> Test." },
+            { type: "mcq", q: "Input của bài toán tính diện tích hình vuông cạnh a là gì?", options: ["Số a", "Diện tích S", "Chu vi C"], correct: 0, exp: "Cần cạnh a để tính S." },
+            { type: "fill", q: "Cách mô tả thuật toán bằng hình vẽ gọi là sơ đồ _______.", correct: "khối", exp: "Sơ đồ khối giúp hình dung thuật toán dễ dàng hơn." }
         ];
 
         const BASE_Q2 = [
-            { type: "mcq", q: "Trong sơ đồ khối, hình chữ nhật biểu thị thao tác gì?", options: ["Nhập/Xuất", "Tính toán/Xử lý", "So sánh"], correct: 1, exp: "Các phép gán, cộng trừ nhân chia đều nằm trong hình chữ nhật này! ➕" },
-            { type: "mcq", q: "Hình thoi trong sơ đồ khối có tác dụng gì?", options: ["Bắt đầu", "Kiểm tra điều kiện", "Kết thúc"], correct: 1, exp: "Hình thoi dùng để rẽ nhánh: Đúng thì đi một đường, Sai đi một đường khác! 💎" },
-            { type: "sort", q: "Sắp xếp thứ tự các khối để nhập 2 số a, b và tính tổng S:", items: ["Xuất S", "Nhập a, b", "S = a + b", "Bắt đầu"], correctOrder: ["Bắt đầu", "Nhập a, b", "S = a + b", "Xuất S"], exp: "Phải bắt đầu, sau đó mới có dữ liệu để tính toán và cuối cùng mới đưa kết quả ra! ➕" },
-            { type: "fill", q: "Hình _______ dùng để biểu thị thao tác Nhập/Xuất dữ liệu.", correct: "bình hành", exp: "Nhớ nhé, cứ Input hay Output thì vẽ hình bình hành cho đẹp và đúng quy ước! 📐" },
-            { type: "classify", q: "Phân loại các khối chức năng trong sơ đồ khối:", pool: ["Hình thoi", "Hình chữ nhật", "Hình bình hành", "Hình Elip"], zones: { "Xử lý/Điều kiện": ["Hình thoi", "Hình chữ nhật"], "Vào/Ra/Khởi đầu": ["Hình bình hành", "Hình Elip"] }, exp: "Mỗi hình có một nhiệm vụ riêng, đừng nhầm lẫn nha! 🎨" },
-            { type: "fill", q: "Khối hình Elip dùng để ghi 'Bắt đầu' hoặc '_______'.", correct: "Kết thúc", exp: "Điểm khởi đầu và điểm dừng chân đều nằm trong hình Elip bo tròn này! 🏁" },
-            { type: "mcq", q: "Lỗi cú pháp thường xảy ra ở bước nào?", options: ["Xây dựng thuật toán", "Viết chương trình", "Xác định bài toán"], correct: 1, exp: "Lỗi cú pháp là do mình gõ sai quy định của ngôn ngữ lập trình đó! ⌨️" },
-            { type: "fill", q: "Chạy thử giúp chúng ta phát hiện ra các _______ logic.", correct: "lỗi", exp: "Nhiều khi code chạy được nhưng kết quả sai, đó là lỗi logic cần tìm! 🔍" },
-            { type: "mcq", q: "Khi giải bài toán, ta nên ưu tiên thuật toán nào?", options: ["Thuật toán đơn giản nhất", "Thuật toán nhanh và tốn ít bộ nhớ", "Thuật toán dài nhất"], correct: 1, exp: "Nhanh - Gọn - Nhẹ luôn là tiêu chí hàng đầu của dân Tin học! 🚀" }
+            { type: "mcq", q: "Trong sơ đồ khối, hình chữ nhật biểu thị thao tác gì?", options: ["Nhập/Xuất", "Tính toán/Xử lý", "So sánh"], correct: 1, exp: "Hình chữ nhật dùng cho các phép toán." },
+            { type: "mcq", q: "Hình thoi trong sơ đồ khối dùng để làm gì?", options: ["Bắt đầu", "Kiểm tra điều kiện", "Kết thúc"], correct: 1, exp: "Hình thoi dùng cho cấu trúc rẽ nhánh." },
+            { type: "fill", q: "Hình _______ biểu thị thao tác Nhập/Xuất dữ liệu.", correct: "bình hành", exp: "Quy ước: Bình hành là Vào/Ra." },
+            { type: "mcq", q: "Điểm bắt đầu và kết thúc sơ đồ khối nằm trong hình gì?", options: ["Hình tròn", "Hình Elip", "Hình chữ nhật"], correct: 1, exp: "Hình Elip bo tròn là nơi khởi đầu và kết thúc." }
+        ];
+
+        // Câu hỏi về SUMIF, COUNTIF, IF, MONTH cho Ải 3
+        const BASE_Q3 = [
+            { type: "mcq", q: "Hàm nào dùng để tính tổng có điều kiện trong Excel?", options: ["SUM", "SUMIF", "COUNTIF", "IF"], correct: 1, exp: "SUMIF = SUM (Tổng) + IF (Nếu/Điều kiện)." },
+            { type: "mcq", q: "Cú pháp của hàm COUNTIF là gì?", options: ["=COUNTIF(điều_kiện, vùng)", "=COUNTIF(vùng, điều_kiện)", "=COUNTIF(vùng)", "=COUNTIF(điều_kiện)"], correct: 1, exp: "Nhớ nhé: Vùng dữ liệu trước, điều kiện sau!" },
+            { type: "fill", q: "Hàm dùng để lấy giá trị tháng từ một ô ngày tháng là _______.", correct: "month", exp: "MONTH(ngày) sẽ trả về số từ 1 đến 12." },
+            { type: "mcq", q: "Hàm IF có tối đa bao nhiêu đối số?", options: ["1", "2", "3", "4"], correct: 2, exp: "IF(điều_kiện, giá_trị_đúng, giá_trị_sai) -> Tổng cộng 3 đối số." },
+            { type: "fill", q: "Để đếm xem có bao nhiêu học sinh 'Giỏi', ta dùng hàm _______.", correct: "countif", exp: "COUNTIF đếm các ô thỏa mãn tiêu chí." },
+            { type: "mcq", q: "Trong hàm SUMIF(B2:B10, '>50', C2:C10), vùng tính tổng là vùng nào?", options: ["B2:B10", "C2:C10", "'>50'"], correct: 1, exp: "Đối số thứ 3 của SUMIF là vùng cần cộng các con số lại." },
+            { type: "sort", q: "Sắp xếp các thành phần của hàm IF chuẩn:", items: ["giá_trị_nếu_sai", "điều_kiện_kiểm_tra", "giá_trị_nếu_đúng"], correctOrder: ["điều_kiện_kiểm_tra", "giá_trị_nếu_đúng", "giá_trị_nếu_sai"], exp: "Cấu trúc: IF(Test, True, False)." },
+            { type: "mcq", q: "Kết quả của =MONTH('2024-12-25') là bao nhiêu?", options: ["2024", "12", "25"], correct: 1, exp: "Hàm lấy ra phần tháng là 12." },
+            { type: "fill", q: "Để tính tổng tiền của riêng mặt hàng 'Gạo', ta dùng hàm _______.", correct: "sumif", exp: "Tính tổng kèm điều kiện tên mặt hàng." },
+            { type: "mcq", q: "Biểu thức =IF(5>3, 'Lớn', 'Nhỏ') trả về kết quả gì?", options: ["Lớn", "Nhỏ", "Báo lỗi"], correct: 0, exp: "Vì 5 lớn hơn 3 là ĐÚNG nên chọn giá trị thứ nhất." }
         ];
 
         const QUESTIONS = {
-            level1: createDummyQuestions(10, BASE_Q1),
-            level2: createDummyQuestions(15, BASE_Q2),
-            level3: createDummyQuestions(20, []),
-            level4: createDummyQuestions(25, [])
+            level1: createQuestions(10, BASE_Q1),
+            level2: createQuestions(15, BASE_Q2),
+            level3: createQuestions(20, BASE_Q3),
+            level4: createQuestions(25, [])
         };
 
         let state = {
-            name: "", score: 0, level: 0, qIdx: 0,
-            correctCount: 0,
+            name: "", score: 0, level: 0, qIdx: 0, correctCount: 0,
             unlocked: [true, false, false, false],
-            currentQuestions: [],
-            tempOrder: [],
-            classifyData: { current: {} },
-            showingResult: false
+            currentQuestions: [], tempOrder: [], classifyData: { current: {} }, showingResult: false
         };
-
-        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
 
         function startGame() {
             state.name = document.getElementById('p-name').value.trim() || "Người bạn bí ẩn";
@@ -257,12 +250,12 @@
 
         function renderMap() {
             const grid = document.getElementById('map-grid');
-            const titles = ["Cơ bản bài toán", "Logic sơ đồ khối", "Luyện tập tổng hợp", "Chuyên gia thuật toán"];
+            const titles = ["Quy trình giải bài", "Sơ đồ khối logic", "Hàm Excel (IF/SUMIF)", "Chuyên gia tổng hợp"];
             const counts = [10, 15, 20, 25];
             grid.innerHTML = titles.map((t, i) => `
                 <div class="map-node ${state.unlocked[i] ? 'active' : 'locked'}" onclick="enterLevel(${i})">
                     ${!state.unlocked[i] ? '<div class="lock-icon">🔒</div>' : ''}
-                    <div style="font-size: 3rem; margin-bottom:10px;">${['🌱','⚙️','📚','🏆'][i]}</div>
+                    <div style="font-size: 3rem; margin-bottom:10px;">${['🌱','⚙️','📊','🏆'][i]}</div>
                     <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary-dark);">ẢI ${i+1}</div>
                     <div style="font-size: 0.9rem; font-weight: 600; opacity: 0.8;">${t}</div>
                     <div style="font-size: 0.8rem; color: var(--secondary); margin-top: 5px;">${counts[i]} câu hỏi</div>
@@ -272,12 +265,8 @@
 
         function enterLevel(idx) {
             if(!state.unlocked[idx]) return;
-            state.level = idx;
-            state.qIdx = 0;
-            state.correctCount = 0;
-            state.showingResult = false;
-            let rawQ = QUESTIONS[`level${idx+1}`];
-            state.currentQuestions = shuffle([...rawQ]);
+            state.level = idx; state.qIdx = 0; state.correctCount = 0; state.showingResult = false;
+            state.currentQuestions = shuffle([...QUESTIONS[`level${idx+1}`]]);
             document.getElementById('map-screen').style.display = 'none';
             document.getElementById('quiz-screen').style.display = 'block';
             document.getElementById('level-title').innerText = `Ải ${idx+1} 🎈`;
@@ -290,115 +279,49 @@
             const action = document.getElementById('quiz-action');
             document.getElementById('q-count').innerText = `Câu ${state.qIdx + 1}/${state.currentQuestions.length}`;
             document.getElementById('progress-bar').style.width = `${((state.qIdx+1)/state.currentQuestions.length)*100}%`;
-            
             action.style.display = (q.type === 'mcq') ? 'none' : 'block';
             
             let html = `<div class="question-text">${q.q}</div>`;
-
             if(q.type === 'mcq') {
                 let opts = q.options.map((o, i) => ({ text: o, id: i }));
                 shuffle(opts);
-                html += `<div class="options-grid">`;
-                opts.forEach(o => {
-                    html += `<button class="option-btn" onclick="checkMcq(${o.id === q.correct}, this)"><span>🔹</span> ${o.text}</button>`;
-                });
-                html += `</div>`;
-            } 
-            else if(q.type === 'fill') {
+                html += `<div class="options-grid">${opts.map(o => `<button class="option-btn" onclick="checkMcq(${o.id === q.correct}, this)"><span>🔹</span> ${o.text}</button>`).join('')}</div>`;
+            } else if(q.type === 'fill') {
                 const words = q.correct.split(' ');
-                html += `<div class="fill-container" id="fill-wrap">`;
-                let globalIdx = 0;
-                words.forEach((word, wIdx) => {
-                    for(let i=0; i<word.length; i++) {
-                        html += `<input type="text" class="char-input" maxlength="1" data-idx="${globalIdx}" 
-                                 oninput="handleCharInput(this)" onkeydown="handleCharKeydown(event, this)">`;
-                        globalIdx++;
-                    }
-                    if(wIdx < words.length - 1) html += `<div class="char-space"></div>`;
+                html += `<div class="fill-container">`;
+                words.forEach((word) => {
+                    for(let i=0; i<word.length; i++) html += `<input type="text" class="char-input" maxlength="1" oninput="handleCharInput(this)">`;
+                    html += `<div class="char-space"></div>`;
                 });
                 html += `</div>`;
-            }
-            else if(q.type === 'sort') {
+            } else if(q.type === 'sort') {
                 state.tempOrder = shuffle([...q.items]);
-                html += `<div class="sortable-list" id="sort-list">`;
-                state.tempOrder.forEach((item, i) => {
-                    html += `<div class="sort-item" draggable="true" ondragstart="handleDragStart(event, ${i})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${i})">☰ ${item}</div>`;
-                });
-                html += `</div>`;
+                html += `<div class="sortable-list" id="sort-list">${state.tempOrder.map((item, i) => `<div class="sort-item" draggable="true" ondragstart="e => e.dataTransfer.setData('text', ${i})" ondragover="e => e.preventDefault()" ondrop="handleDrop(event, ${i})">☰ ${item}</div>`).join('')}</div>`;
             }
-            else if(q.type === 'classify') {
-                html += `
-                    <div id="pool" class="classify-zone" style="margin-bottom:15px; border-style: dashed; min-height: 80px;">
-                        ${q.pool.map(p => `<span class="classify-item" onclick="moveToZone('${p}')">${p}</span>`).join('')}
-                    </div>
-                    <div class="classify-container">
-                        ${Object.keys(q.zones).map(z => `
-                            <div class="classify-zone" id="zone-${z}">
-                                <div style="font-weight:800; font-size:0.8rem; margin-bottom:10px; color:var(--primary-dark)">${z}</div>
-                                <div class="zone-content"></div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                state.classifyData.current = {};
-                Object.keys(q.zones).forEach(z => state.classifyData.current[z] = []);
-            }
-
             container.innerHTML = html;
-            if(q.type === 'fill') {
-                setTimeout(() => document.querySelector('.char-input').focus(), 100);
-            }
         }
 
         function handleCharInput(el) {
             if(el.value) {
-                const next = el.nextElementSibling;
-                if(next && next.classList.contains('char-input')) {
-                    next.focus();
-                } else if(next && next.classList.contains('char-space')) {
-                    const afterSpace = next.nextElementSibling;
-                    if(afterSpace) afterSpace.focus();
-                }
-            }
-            const allInputs = Array.from(document.querySelectorAll('.char-input'));
-            if(allInputs.every(input => input.value !== "")) {
-                setTimeout(() => checkComplexAnswer(), 300);
+                const inputs = Array.from(document.querySelectorAll('.char-input'));
+                const next = inputs[inputs.indexOf(el) + 1];
+                if(next) next.focus();
+                if(inputs.every(i => i.value)) setTimeout(() => checkComplexAnswer(), 300);
             }
         }
 
-        function handleCharKeydown(e, el) {
-            if(e.key === "Backspace" && !el.value) {
-                const prev = el.previousElementSibling;
-                if(prev && prev.classList.contains('char-input')) {
-                    prev.focus();
-                } else if(prev && prev.classList.contains('char-space')) {
-                    const beforeSpace = prev.previousElementSibling;
-                    if(beforeSpace) beforeSpace.focus();
-                }
-            }
-        }
-
-        function getFillValue() {
-            const inputs = document.querySelectorAll('.char-input');
-            let result = "";
-            let idx = 0;
-            const words = state.currentQuestions[state.qIdx].correct.split(' ');
-            words.forEach((word, wIdx) => {
-                for(let i=0; i<word.length; i++) {
-                    result += inputs[idx].value;
-                    idx++;
-                }
-                if(wIdx < words.length - 1) result += " ";
-            });
-            return result;
+        function handleDrop(e, to) {
+            const from = e.dataTransfer.getData('text');
+            const item = state.tempOrder.splice(from, 1)[0];
+            state.tempOrder.splice(to, 0, item);
+            renderQuestion(); // Re-render logic for sort
         }
 
         function checkMcq(isCorrect, btn) {
             const q = state.currentQuestions[state.qIdx];
             if(isCorrect) {
                 btn.classList.add('correct-flash');
-                state.score += 10;
-                state.correctCount++;
+                state.score += 10; state.correctCount++;
                 document.getElementById('hud-score').innerText = state.score;
                 setTimeout(() => nextStep(), 400);
             } else {
@@ -406,75 +329,21 @@
             }
         }
 
-        function handleDragStart(e, i) { e.dataTransfer.setData('text/plain', i); }
-        function handleDragOver(e) { e.preventDefault(); }
-        function handleDrop(e, to) {
-            const from = e.dataTransfer.getData('text/plain');
-            const item = state.tempOrder.splice(from, 1)[0];
-            state.tempOrder.splice(to, 0, item);
-            renderSortList();
-        }
-        function renderSortList() {
-            const list = document.getElementById('sort-list');
-            list.innerHTML = state.tempOrder.map((item, i) => `
-                <div class="sort-item" draggable="true" ondragstart="handleDragStart(event, ${i})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${i})">☰ ${item}</div>
-            `).join('');
-        }
-
-        function moveToZone(item) {
-            const q = state.currentQuestions[state.qIdx];
-            const zones = Object.keys(q.zones);
-            let currentZone = zones.find(z => state.classifyData.current[z].includes(item));
-            if(!currentZone) {
-                state.classifyData.current[zones[0]].push(item);
-            } else {
-                let idx = zones.indexOf(currentZone);
-                state.classifyData.current[currentZone] = state.classifyData.current[currentZone].filter(i => i !== item);
-                if(idx < zones.length - 1) {
-                    state.classifyData.current[zones[idx+1]].push(item);
-                }
-            }
-            updateClassifyUI();
-        }
-
-        function updateClassifyUI() {
-            const q = state.currentQuestions[state.qIdx];
-            const allSelected = [].concat(...Object.values(state.classifyData.current));
-            document.getElementById('pool').querySelectorAll('.classify-item').forEach(el => {
-                el.style.opacity = allSelected.includes(el.innerText) ? "0.3" : "1";
-            });
-            Object.keys(q.zones).forEach(z => {
-                const zoneBox = document.querySelector(`#zone-${z} .zone-content`);
-                zoneBox.innerHTML = state.classifyData.current[z].map(i => `<span class="classify-item" style="background:var(--secondary); font-size:0.7rem;" onclick="moveToZone('${i}')">${i}</span>`).join('');
-            });
-        }
-
         function checkComplexAnswer() {
             const q = state.currentQuestions[state.qIdx];
             let isCorrect = false;
-            let correctText = "";
+            let correctText = q.correct || "";
 
-            if(q.type === 'sort') {
+            if(q.type === 'fill') {
+                const val = removeAccents(Array.from(document.querySelectorAll('.char-input')).map(i => i.value).join('').toLowerCase());
+                isCorrect = val === removeAccents(q.correct.replace(/\s/g, '').toLowerCase());
+            } else if(q.type === 'sort') {
                 isCorrect = JSON.stringify(state.tempOrder) === JSON.stringify(q.correctOrder);
                 correctText = q.correctOrder.join(" ➔ ");
-            } else if(q.type === 'fill') {
-                const val = removeAccents(getFillValue().trim().toLowerCase());
-                const answer = removeAccents(q.correct.toLowerCase());
-                isCorrect = val === answer;
-                correctText = q.correct;
-            } else if(q.type === 'classify') {
-                isCorrect = true;
-                Object.keys(q.zones).forEach(z => {
-                    const match = q.zones[z].every(item => state.classifyData.current[z].includes(item)) && 
-                                q.zones[z].length === state.classifyData.current[z].length;
-                    if(!match) isCorrect = false;
-                });
-                correctText = Object.entries(q.zones).map(([k,v]) => `${k}: ${v.join(", ")}`).join(" | ");
             }
 
             if(isCorrect) {
-                state.score += 10;
-                state.correctCount++;
+                state.score += 10; state.correctCount++;
                 document.getElementById('hud-score').innerText = state.score;
                 nextStep();
             } else {
@@ -484,43 +353,19 @@
 
         function showFeedback(correct, ans, exp) {
             const modal = document.getElementById('feedback-modal');
-            const title = document.getElementById('modal-title');
-            const icon = document.getElementById('modal-icon');
-            const btn = document.getElementById('modal-btn');
-
-            if(correct) {
-                icon.innerText = "🎉";
-                title.innerText = "CHÚC MỪNG!";
-                title.style.color = "var(--primary)";
-                btn.innerText = "QUAY LẠI BẢN ĐỒ 🗺️";
-            } else {
-                icon.innerText = "🔍";
-                title.innerText = "Ồ! Cần xem lại rồi...";
-                title.style.color = "var(--danger)";
-                btn.innerText = "ĐÃ HIỂU, TIẾP TỤC THÔI! 💪";
-            }
-
-            document.getElementById('modal-correct-ans').innerHTML = `💡 Đáp án đúng là:<br><span style="font-size:1.4rem; color:var(--primary-dark)">${ans.toUpperCase()}</span>`;
+            document.getElementById('modal-correct-ans').innerHTML = `💡 Đáp án: <span style="color:var(--primary-dark)">${ans.toUpperCase()}</span>`;
             document.getElementById('modal-exp').innerText = exp;
             modal.style.display = 'flex';
         }
 
         function closeFeedback() {
             document.getElementById('feedback-modal').style.display = 'none';
-            if(state.showingResult) {
-                backToMap();
-            } else {
-                nextStep();
-            }
+            if(state.showingResult) backToMap(); else nextStep();
         }
 
         function nextStep() {
             state.qIdx++;
-            if(state.qIdx >= state.currentQuestions.length) {
-                showFinalResult();
-            } else {
-                renderQuestion();
-            }
+            if(state.qIdx >= state.currentQuestions.length) showFinalResult(); else renderQuestion();
         }
 
         function showFinalResult() {
@@ -529,27 +374,12 @@
             const percent = (state.correctCount / total) * 100;
             const passed = percent >= 70;
             
-            const modal = document.getElementById('feedback-modal');
-            const title = document.getElementById('modal-title');
-            const icon = document.getElementById('modal-icon');
-            const ansBox = document.getElementById('modal-correct-ans');
-            const expBox = document.getElementById('modal-exp');
-            const btn = document.getElementById('modal-btn');
+            if(passed && state.level < 3) state.unlocked[state.level + 1] = true;
 
-            icon.innerText = passed ? "🏆" : "📉";
-            title.innerText = passed ? "ẢI TIẾP THEO ĐÃ MỞ!" : "CHƯA ĐỦ ĐIỀU KIỆN...";
-            title.style.color = passed ? "var(--primary)" : "var(--danger)";
-            
-            ansBox.innerHTML = `Bạn đúng được <b>${state.correctCount}/${total}</b> câu (${percent.toFixed(1)}%)`;
-            expBox.innerText = passed ? 
-                "Tuyệt vời! Bạn đã vượt qua thử thách với kết quả xuất sắc. Hãy chinh phục ải tiếp theo nhé!" : 
-                "Tiếc quá, bạn cần đúng ít nhất 70% để mở khóa ải mới. Hãy thử lại để rèn luyện thêm kiến thức nhé!";
-            
-            if(passed && state.level < 3) {
-                state.unlocked[state.level + 1] = true;
-            }
-            
-            btn.innerText = "QUAY LẠI BẢN ĐỒ 🗺️";
+            const modal = document.getElementById('feedback-modal');
+            document.getElementById('modal-title').innerText = passed ? "ẢI TIẾP THEO ĐÃ MỞ!" : "CHƯA ĐỦ ĐIỀU KIỆN...";
+            document.getElementById('modal-correct-ans').innerHTML = `Bạn đúng <b>${state.correctCount}/${total}</b> câu (${percent.toFixed(1)}%)`;
+            document.getElementById('modal-exp').innerText = passed ? "Giỏi quá! Tiếp tục phát huy nhé!" : "Cần ít nhất 70% để qua màn. Thử lại nào!";
             modal.style.display = 'flex';
         }
 
