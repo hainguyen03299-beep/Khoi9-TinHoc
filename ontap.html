@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberQuest: Ôn Tập ✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #10b981; 
+            --primary-dark: #059669;
+            --secondary: #84cc16; 
+            --success: #22c55e;
+            --danger: #f43f5e;
+            --warning: #eab308;
+            --bg: #f0fdf4; 
+            --text: #064e3b; 
+            --white: #ffffff;
+            --border: #bbf7d0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Lexend', sans-serif; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            min-height: 100vh;
+            background-image: radial-gradient(var(--border) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .container { max-width: 750px; margin: 0 auto; padding: 20px; display: none; }
+        .card { 
+            background: var(--white); 
+            border-radius: 30px; 
+            padding: 30px; 
+            box-shadow: 0 12px 0px var(--border); 
+            border: 3px solid var(--border);
+            position: relative;
+        }
+
+        /* HUD */
+        .hud { position: fixed; top: 15px; right: 15px; display: flex; gap: 10px; z-index: 100; }
+        .hud-item { 
+            background: var(--white); padding: 10px 20px; border-radius: 50px; font-weight: 800; 
+            box-shadow: 0 4px 0px var(--border); border: 2px solid var(--border);
+            display: flex; align-items: center; gap: 8px; color: var(--primary-dark);
+        }
+
+        /* Progress Bar */
+        .progress-container { height: 14px; background: #dcfce7; border-radius: 10px; overflow: hidden; margin-bottom: 25px; border: 2px solid var(--border); }
+        .progress-bar { 
+            height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); 
+            width: 0%; transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 10px;
+        }
+
+        /* Question UI */
+        .question-text { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; line-height: 1.5; color: #065f46; }
+        .options-grid { display: grid; gap: 12px; }
+        .option-btn {
+            background: #fff; border: 2px solid var(--border); padding: 16px; border-radius: 18px;
+            text-align: left; cursor: pointer; transition: all 0.2s; font-size: 1rem; font-weight: 600;
+            color: var(--text); display: flex; align-items: center; gap: 12px;
+        }
+        .option-btn:hover { border-color: var(--primary); background: #f0fdf4; transform: scale(1.02); }
+        .option-btn.correct-flash { background: var(--success) !important; color: white !important; border-color: var(--primary-dark) !important; }
+        
+        /* Character Slots for Fill-in-the-blank */
+        .fill-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0; }
+        .char-input {
+            width: 45px; height: 55px; border: 3px solid var(--border); border-radius: 12px;
+            text-align: center; font-size: 1.5rem; font-weight: 800; color: var(--primary-dark);
+            background: #fff; outline: none; transition: 0.2s; text-transform: uppercase;
+        }
+        .char-input:focus { border-color: var(--primary); background: #f0fdf4; transform: translateY(-3px); }
+        .char-space { width: 20px; }
+
+        /* Drag & Drop / Sorting UI */
+        .sortable-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .sort-item {
+            padding: 15px; background: #fff; border: 2px dashed var(--primary); border-radius: 15px;
+            cursor: grab; display: flex; align-items: center; gap: 10px; font-weight: 600; transition: 0.2s;
+        }
+        .sort-item:active { cursor: grabbing; transform: scale(0.98); }
+
+        /* Classification UI */
+        .classify-container { display: flex; gap: 15px; margin-top: 20px; }
+        .classify-zone { 
+            flex: 1; min-height: 120px; background: #f9fafb; border: 2px solid var(--border); 
+            border-radius: 20px; padding: 15px; text-align: center; transition: 0.3s;
+        }
+        .classify-zone.filled { background: #ecfdf5; border-color: var(--primary); }
+        .classify-item { 
+            display: inline-block; padding: 10px 15px; background: var(--primary); color: white; 
+            border-radius: 12px; margin: 5px; cursor: pointer; font-size: 0.85rem; font-weight: 700;
+            box-shadow: 0 3px 0 var(--primary-dark);
+        }
+
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(6, 78, 59, 0.7); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(8px); }
+        .modal-card { 
+            background: white; padding: 35px; border-radius: 35px; max-width: 500px; width: 90%; 
+            text-align: center; border: 5px solid var(--danger); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .correct-box { background: #f0fdf4; border: 2px dashed var(--primary); padding: 15px; border-radius: 15px; margin: 15px 0; font-weight: 800; color: var(--primary-dark); }
+        .exp-box { background: #fffbeb; padding: 15px; border-radius: 15px; text-align: left; font-size: 0.9rem; color: #92400e; line-height: 1.5; }
+
+        .btn {
+            background: var(--primary); color: white; border: none; padding: 16px; border-radius: 20px;
+            font-weight: 800; cursor: pointer; width: 100%; box-shadow: 0 6px 0px var(--primary-dark);
+            transition: 0.2s; font-size: 1.1rem;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 0px var(--primary-dark); }
+        .btn:active { transform: translateY(4px); box-shadow: 0 2px 0px var(--primary-dark); }
+
+        .map-node { 
+            background: white; padding: 25px; border-radius: 30px; border: 3px solid var(--border); 
+            cursor: pointer; text-align: center; transition: 0.3s; box-shadow: 0 10px 0px var(--border);
+        }
+        .map-node.active:hover { transform: translateY(-8px); border-color: var(--primary); background: #f0fdf4; }
+        .map-node.locked { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+        
+        input[type="text"].auth-input {
+            width: 100%; padding: 18px; border-radius: 18px; border: 3px solid var(--border);
+            font-size: 1.1rem; text-align: center; outline: none; transition: 0.3s; color: var(--primary-dark);
+            font-weight: 700;
+        }
+        input[type="text"].auth-input:focus { border-color: var(--primary); background: #f0fdf4; }
+    </style>
+</head>
+<body>
+
+    <div class="hud" id="game-hud" style="display: none;">
+        <div class="hud-item">⭐ <span id="hud-name"></span></div>
+        <div class="hud-item">💎 <span id="hud-score">0</span> XP</div>
+    </div>
+
+    <!-- Màn hình chào mừng -->
+    <div id="auth-screen" class="container" style="display: block; margin-top: 10vh;">
+        <div class="card" style="text-align: center;">
+            <div style="font-size: 5rem; margin-bottom: 10px;">🎮</div>
+            <h1 style="margin-bottom: 5px; color: var(--primary-dark); font-size: 2rem;">CYBER QUEST 9.0</h1>
+            <p style="margin-bottom: 30px; font-weight: 600; color: #666;">Chinh phục Tin học cực chill cùng chúng mình! ✨</p>
+            <input type="text" id="p-name" class="auth-input" placeholder="Tên của bạn là gì nhỉ?..." autocomplete="off">
+            <button class="btn" style="margin-top: 20px;" onclick="startGame()">KHÁM PHÁ NGAY 🚀</button>
+        </div>
+    </div>
+
+    <!-- Bản đồ thử thách -->
+    <div id="map-screen" class="container">
+        <h2 style="margin-bottom: 25px; text-align: center; font-size: 1.8rem;">Lộ Trình Giải Đố 🗺️</h2>
+        <div id="map-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px;"></div>
+    </div>
+
+    <!-- Màn hình câu hỏi -->
+    <div id="quiz-screen" class="container">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+                <span id="level-title" style="font-weight: 800; color: var(--primary-dark); font-size: 1.1rem;"></span>
+                <span id="q-count" style="font-weight: 800; background: #dcfce7; padding: 5px 12px; border-radius: 10px; font-size: 0.9rem;"></span>
+            </div>
+            <div class="progress-container"><div id="progress-bar" class="progress-bar"></div></div>
+            <div id="quiz-content"></div>
+            <div id="quiz-action" style="margin-top: 25px; display: none;">
+                <button class="btn" id="check-btn" onclick="checkComplexAnswer()">KIỂM TRA ĐÁP ÁN ✅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phân tích lỗi (Modal khi sai) -->
+    <div id="feedback-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🔍</div>
+            <h2 style="color: var(--danger); margin-bottom: 10px;">Ồ! Cần xem lại rồi...</h2>
+            <div id="modal-correct-ans" class="correct-box"></div>
+            <div id="modal-exp" class="exp-box"></div>
+            <button class="btn" style="margin-top: 25px;" onclick="closeFeedback()">ĐÃ HIỂU, TIẾP TỤC THÔI! 💪</button>
+        </div>
+    </div>
+
+    <script>
+        // Tiện ích xử lý chuỗi tiếng Việt không dấu
+        const removeAccents = (str) => {
+            return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+        };
+
+        const QUESTIONS = {
+            level1: [
+                { type: "mcq", q: "Bước đầu tiên trong quy trình giải bài toán trên máy tính là gì?", options: ["Xác định bài toán", "Viết chương trình", "Xây dựng thuật toán"], correct: 0, exp: "Chúng mình phải biết bài toán yêu cầu gì (Input/Output) trước khi làm các bước khác nhé! ✨" },
+                { type: "fill", q: "Sau khi xác định bài toán, chúng ta cần xây dựng _______.", correct: "thuật toán", exp: "Thuật toán chính là 'bí kíp' các bước để giải quyết vấn đề đó! 📜" },
+                { type: "sort", q: "Sắp xếp các bước giải bài toán theo đúng thứ tự chuẩn nhé:", items: ["Viết chương trình", "Xây dựng thuật toán", "Xác định bài toán", "Chạy thử & Kiểm lỗi"], correctOrder: ["Xác định bài toán", "Xây dựng thuật toán", "Viết chương trình", "Chạy thử & Kiểm lỗi"], exp: "Quy trình 4 bước thần thánh: Xác định -> Thuật toán -> Lập trình -> Test. Nhớ kỹ nha! 🧠" },
+                { type: "classify", q: "Phân loại Input và Output của bài toán 'Tính diện tích hình chữ nhật':", pool: ["Chiều dài a", "Chiều rộng b", "Diện tích S", "Chu vi P"], zones: { "Input": ["Chiều dài a", "Chiều rộng b"], "Output": ["Diện tích S"] }, exp: "Cần a và b để tính, kết quả trả về là S. Chu vi P không liên quan ở đây nè! 📏" },
+                { type: "mcq", q: "Viết chương trình là việc sử dụng ngôn ngữ gì để diễn tả thuật toán?", options: ["Ngôn ngữ tự nhiên", "Ngôn ngữ lập trình", "Ngôn ngữ cơ thể"], correct: 1, exp: "Máy tính chỉ hiểu các ngôn ngữ lập trình như Pascal, Python hay C++ thôi! 💻" },
+                { type: "fill", q: "Bước cuối cùng của quy trình là chạy thử và _______ lỗi.", correct: "kiểm", exp: "Viết xong rồi phải kiểm tra xem có lỗi (bug) nào không thì mới dùng được chứ! 🐞" },
+                { type: "mcq", q: "Input của bài toán 'Tìm số lớn nhất trong 2 số a và b' là gì?", options: ["Số a và b", "Số lớn nhất", "Tổng a + b"], correct: 0, exp: "Đầu vào là 2 số cần so sánh nhé! 🔢" },
+                { type: "fill", q: "Cách mô tả thuật toán bằng hình vẽ gọi là sơ đồ _______.", correct: "khối", exp: "Sơ đồ khối giúp chúng mình nhìn thuật toán một cách trực quan bằng hình ảnh! 🖼️" },
+                { type: "mcq", q: "Thuật toán dừng lại khi nào?", options: ["Khi tìm ra kết quả", "Khi hết thời gian", "Khi máy tính bị tắt"], correct: 0, exp: "Một thuật toán đúng phải có tính hữu hạn, nghĩa là phải dừng và cho kết quả! ✅" },
+                { type: "fill", q: "Tính chất của thuật toán: Một dãy _______ các thao tác.", correct: "hữu hạn", exp: "Dãy phải có điểm dừng, không thể chạy mãi mãi được đâu! ⏳" }
+            ],
+            level2: [
+                { type: "mcq", q: "Trong sơ đồ khối, hình chữ nhật biểu thị thao tác gì?", options: ["Nhập/Xuất", "Tính toán/Xử lý", "So sánh"], correct: 1, exp: "Các phép gán, cộng trừ nhân chia đều nằm trong hình chữ nhật này! ➕" },
+                { type: "mcq", q: "Hình thoi trong sơ đồ khối có tác dụng gì?", options: ["Bắt đầu", "Kiểm tra điều kiện", "Kết thúc"], correct: 1, exp: "Hình thoi dùng để rẽ nhánh: Đúng thì đi một đường, Sai đi một đường khác! 💎" },
+                { type: "sort", q: "Sắp xếp thứ tự các khối để nhập 2 số a, b và tính tổng S:", items: ["Xuất S", "Nhập a, b", "S = a + b", "Bắt đầu"], correctOrder: ["Bắt đầu", "Nhập a, b", "S = a + b", "Xuất S"], exp: "Phải bắt đầu, sau đó mới có dữ liệu để tính toán và cuối cùng mới đưa kết quả ra! ➕" },
+                { type: "fill", q: "Hình _______ dùng để biểu thị thao tác Nhập/Xuất dữ liệu.", correct: "bình hành", exp: "Nhớ nhé, cứ Input hay Output thì vẽ hình bình hành cho đẹp và đúng quy ước! 📐" },
+                { type: "classify", q: "Phân loại các khối chức năng trong sơ đồ khối:", pool: ["Hình thoi", "Hình chữ nhật", "Hình bình hành", "Hình Elip"], zones: { "Xử lý/Điều kiện": ["Hình thoi", "Hình chữ nhật"], "Vào/Ra/Khởi đầu": ["Hình bình hành", "Hình Elip"] }, exp: "Mỗi hình có một nhiệm vụ riêng, đừng nhầm lẫn nha! 🎨" },
+                { type: "fill", q: "Khối hình Elip dùng để ghi 'Bắt đầu' hoặc '_______'.", correct: "Kết thúc", exp: "Điểm khởi đầu và điểm dừng chân đều nằm trong hình Elip bo tròn này! 🏁" },
+                { type: "mcq", q: "Lỗi cú pháp thường xảy ra ở bước nào?", options: ["Xây dựng thuật toán", "Viết chương trình", "Xác định bài toán"], correct: 1, exp: "Lỗi cú pháp là do mình gõ sai quy định của ngôn ngữ lập trình đó! ⌨️" },
+                { type: "fill", q: "Chạy thử giúp chúng ta phát hiện ra các _______ logic.", correct: "lỗi", exp: "Nhiều khi code chạy được nhưng kết quả sai, đó là lỗi logic cần tìm! 🔍" },
+                { type: "mcq", q: "Khi giải bài toán, ta nên ưu tiên thuật toán nào?", options: ["Thuật toán đơn giản nhất", "Thuật toán nhanh và tốn ít bộ nhớ", "Thuật toán dài nhất"], correct: 1, exp: "Nhanh - Gọn - Nhẹ luôn là tiêu chí hàng đầu của dân Tin học! 🚀" }
+            ]
+        };
+
+        let state = {
+            name: "", score: 0, level: 0, qIdx: 0,
+            unlocked: [true, false, false, false],
+            currentQuestions: [],
+            tempOrder: [],
+            classifyData: { current: {} }
+        };
+
+        function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+
+        function startGame() {
+            state.name = document.getElementById('p-name').value.trim() || "Người bạn bí ẩn";
+            document.getElementById('hud-name').innerText = state.name;
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('game-hud').style.display = 'flex';
+            document.getElementById('map-screen').style.display = 'block';
+            renderMap();
+        }
+
+        function renderMap() {
+            const grid = document.getElementById('map-grid');
+            const titles = ["Cơ bản bài toán", "Logic sơ đồ khối", "Luyện tập tổng hợp", "Chuyên gia thuật toán"];
+            const counts = [10, 15, 20, 25];
+            grid.innerHTML = titles.map((t, i) => `
+                <div class="map-node ${state.unlocked[i] ? 'active' : 'locked'}" onclick="enterLevel(${i})">
+                    <div style="font-size: 3rem; margin-bottom:10px;">${['🌱','⚙️','📚','🏆'][i]}</div>
+                    <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary-dark);">ẢI ${i+1}</div>
+                    <div style="font-size: 0.9rem; font-weight: 600; opacity: 0.8;">${t}</div>
+                    <div style="font-size: 0.8rem; color: var(--secondary); margin-top: 5px;">${counts[i] || 10} câu hỏi</div>
+                </div>
+            `).join('');
+        }
+
+        function enterLevel(idx) {
+            if(!state.unlocked[idx]) return;
+            state.level = idx;
+            state.qIdx = 0;
+            let rawQ = QUESTIONS[`level${idx+1}`] || QUESTIONS.level1;
+            state.currentQuestions = shuffle([...rawQ]);
+            document.getElementById('map-screen').style.display = 'none';
+            document.getElementById('quiz-screen').style.display = 'block';
+            document.getElementById('level-title').innerText = `Ải ${idx+1} 🎈`;
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = state.currentQuestions[state.qIdx];
+            const container = document.getElementById('quiz-content');
+            const action = document.getElementById('quiz-action');
+            document.getElementById('q-count').innerText = `Câu ${state.qIdx + 1}/${state.currentQuestions.length}`;
+            document.getElementById('progress-bar').style.width = `${((state.qIdx+1)/state.currentQuestions.length)*100}%`;
+            
+            action.style.display = (q.type === 'mcq') ? 'none' : 'block';
+            
+            let html = `<div class="question-text">${q.q}</div>`;
+
+            if(q.type === 'mcq') {
+                let opts = q.options.map((o, i) => ({ text: o, id: i }));
+                shuffle(opts);
+                html += `<div class="options-grid">`;
+                opts.forEach(o => {
+                    html += `<button class="option-btn" onclick="checkMcq(${o.id === q.correct}, this)"><span>🔹</span> ${o.text}</button>`;
+                });
+                html += `</div>`;
+            } 
+            else if(q.type === 'fill') {
+                const words = q.correct.split(' ');
+                html += `<div class="fill-container" id="fill-wrap">`;
+                let globalIdx = 0;
+                words.forEach((word, wIdx) => {
+                    for(let i=0; i<word.length; i++) {
+                        html += `<input type="text" class="char-input" maxlength="1" data-idx="${globalIdx}" 
+                                 oninput="handleCharInput(this)" onkeydown="handleCharKeydown(event, this)">`;
+                        globalIdx++;
+                    }
+                    if(wIdx < words.length - 1) html += `<div class="char-space"></div>`;
+                });
+                html += `</div>`;
+                action.style.display = "block";
+            }
+            else if(q.type === 'sort') {
+                state.tempOrder = shuffle([...q.items]);
+                html += `<div class="sortable-list" id="sort-list">`;
+                state.tempOrder.forEach((item, i) => {
+                    html += `<div class="sort-item" draggable="true" ondragstart="handleDragStart(event, ${i})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${i})">☰ ${item}</div>`;
+                });
+                html += `</div>`;
+            }
+            else if(q.type === 'classify') {
+                html += `
+                    <div id="pool" class="classify-zone" style="margin-bottom:15px; border-style: dashed; min-height: 80px;">
+                        ${q.pool.map(p => `<span class="classify-item" onclick="moveToZone('${p}')">${p}</span>`).join('')}
+                    </div>
+                    <div class="classify-container">
+                        ${Object.keys(q.zones).map(z => `
+                            <div class="classify-zone" id="zone-${z}">
+                                <div style="font-weight:800; font-size:0.8rem; margin-bottom:10px; color:var(--primary-dark)">${z}</div>
+                                <div class="zone-content"></div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                state.classifyData.current = {};
+                Object.keys(q.zones).forEach(z => state.classifyData.current[z] = []);
+            }
+
+            container.innerHTML = html;
+            if(q.type === 'fill') {
+                setTimeout(() => document.querySelector('.char-input').focus(), 100);
+            }
+        }
+
+        // --- Logic Xử lý Fill-in-the-blank Ô vuông ---
+        function handleCharInput(el) {
+            if(el.value) {
+                const next = el.nextElementSibling;
+                if(next && next.classList.contains('char-input')) {
+                    next.focus();
+                } else if(next && next.classList.contains('char-space')) {
+                    const afterSpace = next.nextElementSibling;
+                    if(afterSpace) afterSpace.focus();
+                }
+            }
+            // Tự động kiểm tra nếu đã điền đủ hết các ô
+            const allInputs = Array.from(document.querySelectorAll('.char-input'));
+            if(allInputs.every(input => input.value !== "")) {
+                // Đợi một chút để người dùng thấy ký tự cuối cùng
+                setTimeout(() => checkComplexAnswer(), 300);
+            }
+        }
+
+        function handleCharKeydown(e, el) {
+            if(e.key === "Backspace" && !el.value) {
+                const prev = el.previousElementSibling;
+                if(prev && prev.classList.contains('char-input')) {
+                    prev.focus();
+                } else if(prev && prev.classList.contains('char-space')) {
+                    const beforeSpace = prev.previousElementSibling;
+                    if(beforeSpace) beforeSpace.focus();
+                }
+            }
+        }
+
+        function getFillValue() {
+            const inputs = document.querySelectorAll('.char-input');
+            const wrap = document.getElementById('fill-wrap');
+            let result = "";
+            let idx = 0;
+            const words = state.currentQuestions[state.qIdx].correct.split(' ');
+            words.forEach((word, wIdx) => {
+                for(let i=0; i<word.length; i++) {
+                    result += inputs[idx].value;
+                    idx++;
+                }
+                if(wIdx < words.length - 1) result += " ";
+            });
+            return result;
+        }
+
+        // --- Các Logic khác giữ nguyên ---
+        function checkMcq(isCorrect, btn) {
+            const q = state.currentQuestions[state.qIdx];
+            if(isCorrect) {
+                btn.classList.add('correct-flash');
+                state.score += 10;
+                document.getElementById('hud-score').innerText = state.score;
+                setTimeout(() => nextStep(), 400);
+            } else {
+                showFeedback(false, q.options[q.correct], q.exp);
+            }
+        }
+
+        function handleDragStart(e, i) { e.dataTransfer.setData('text/plain', i); }
+        function handleDragOver(e) { e.preventDefault(); }
+        function handleDrop(e, to) {
+            const from = e.dataTransfer.getData('text/plain');
+            const item = state.tempOrder.splice(from, 1)[0];
+            state.tempOrder.splice(to, 0, item);
+            renderSortList();
+        }
+        function renderSortList() {
+            const list = document.getElementById('sort-list');
+            list.innerHTML = state.tempOrder.map((item, i) => `
+                <div class="sort-item" draggable="true" ondragstart="handleDragStart(event, ${i})" ondragover="handleDragOver(event)" ondrop="handleDrop(event, ${i})">☰ ${item}</div>
+            `).join('');
+        }
+
+        function moveToZone(item) {
+            const q = state.currentQuestions[state.qIdx];
+            const zones = Object.keys(q.zones);
+            let currentZone = zones.find(z => state.classifyData.current[z].includes(item));
+            if(!currentZone) {
+                state.classifyData.current[zones[0]].push(item);
+            } else {
+                let idx = zones.indexOf(currentZone);
+                state.classifyData.current[currentZone] = state.classifyData.current[currentZone].filter(i => i !== item);
+                if(idx < zones.length - 1) {
+                    state.classifyData.current[zones[idx+1]].push(item);
+                }
+            }
+            updateClassifyUI();
+        }
+
+        function updateClassifyUI() {
+            const q = state.currentQuestions[state.qIdx];
+            const allSelected = [].concat(...Object.values(state.classifyData.current));
+            document.getElementById('pool').querySelectorAll('.classify-item').forEach(el => {
+                el.style.opacity = allSelected.includes(el.innerText) ? "0.3" : "1";
+            });
+            Object.keys(q.zones).forEach(z => {
+                const zoneBox = document.querySelector(`#zone-${z} .zone-content`);
+                zoneBox.innerHTML = state.classifyData.current[z].map(i => `<span class="classify-item" style="background:var(--secondary); font-size:0.7rem;" onclick="moveToZone('${i}')">${i}</span>`).join('');
+            });
+        }
+
+        function checkComplexAnswer() {
+            const q = state.currentQuestions[state.qIdx];
+            let isCorrect = false;
+            let correctText = "";
+
+            if(q.type === 'sort') {
+                isCorrect = JSON.stringify(state.tempOrder) === JSON.stringify(q.correctOrder);
+                correctText = q.correctOrder.join(" ➔ ");
+            } else if(q.type === 'fill') {
+                const val = removeAccents(getFillValue().trim().toLowerCase());
+                const answer = removeAccents(q.correct.toLowerCase());
+                isCorrect = val === answer;
+                correctText = q.correct;
+            } else if(q.type === 'classify') {
+                isCorrect = true;
+                Object.keys(q.zones).forEach(z => {
+                    const match = q.zones[z].every(item => state.classifyData.current[z].includes(item)) && 
+                                q.zones[z].length === state.classifyData.current[z].length;
+                    if(!match) isCorrect = false;
+                });
+                correctText = Object.entries(q.zones).map(([k,v]) => `${k}: ${v.join(", ")}`).join(" | ");
+            }
+
+            if(isCorrect) {
+                state.score += 10;
+                document.getElementById('hud-score').innerText = state.score;
+                nextStep();
+            } else {
+                showFeedback(false, correctText, q.exp);
+            }
+        }
+
+        function showFeedback(correct, ans, exp) {
+            const modal = document.getElementById('feedback-modal');
+            document.getElementById('modal-correct-ans').innerHTML = `💡 Đáp án đúng là:<br><span style="font-size:1.4rem; color:var(--primary-dark)">${ans.toUpperCase()}</span>`;
+            document.getElementById('modal-exp').innerText = exp;
+            modal.style.display = 'flex';
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedback-modal').style.display = 'none';
+            nextStep();
+        }
+
+        function nextStep() {
+            state.qIdx++;
+            if(state.qIdx >= state.currentQuestions.length) {
+                alert(`🎉 Xịn quá! Bạn đã hoàn thành ải này.\nSố điểm tích lũy: ${state.score} XP.`);
+                if(state.level < 3) state.unlocked[state.level + 1] = true;
+                backToMap();
+            } else {
+                renderQuestion();
+            }
+        }
+
+        function backToMap() {
+            document.getElementById('quiz-screen').style.display = 'none';
+            document.getElementById('map-screen').style.display = 'block';
+            renderMap();
+        }
+    </script>
+</body>
+</html>
