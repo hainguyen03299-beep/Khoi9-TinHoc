@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberQuest: Ôn Tập ✨</title>
+    <title>CyberQuest: Thử Thách Tin Học 9 ✨</title>
     <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -117,9 +117,11 @@
         .map-node { 
             background: white; padding: 25px; border-radius: 30px; border: 3px solid var(--border); 
             cursor: pointer; text-align: center; transition: 0.3s; box-shadow: 0 10px 0px var(--border);
+            position: relative;
         }
         .map-node.active:hover { transform: translateY(-8px); border-color: var(--primary); background: #f0fdf4; }
         .map-node.locked { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+        .lock-icon { position: absolute; top: 10px; right: 10px; font-size: 1.2rem; }
         
         input[type="text"].auth-input {
             width: 100%; padding: 18px; border-radius: 18px; border: 3px solid var(--border);
@@ -142,7 +144,7 @@
             <div style="font-size: 5rem; margin-bottom: 10px;">🎮</div>
             <h1 style="margin-bottom: 5px; color: var(--primary-dark); font-size: 2rem;">CYBER QUEST 9.0</h1>
             <p style="margin-bottom: 30px; font-weight: 600; color: #666;">Chinh phục Tin học cực chill cùng chúng mình! ✨</p>
-            <input type="text" id="p-name" class="auth-input" placeholder="Tên của bạn là gì nhỉ?..." autocomplete="off">
+            <input type="text" id="p-name" class="auth-input" placeholder="Hãy điền tên của bạn..." autocomplete="off">
             <button class="btn" style="margin-top: 20px;" onclick="startGame()">KHÁM PHÁ NGAY 🚀</button>
         </div>
     </div>
@@ -150,6 +152,7 @@
     <!-- Bản đồ thử thách -->
     <div id="map-screen" class="container">
         <h2 style="margin-bottom: 25px; text-align: center; font-size: 1.8rem;">Lộ Trình Giải Đố 🗺️</h2>
+        <p style="text-align: center; margin-bottom: 20px; font-weight: 600; color: var(--primary-dark);">Vượt qua 70% số câu mỗi ải để mở khóa ải tiếp theo nhé!</p>
         <div id="map-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px;"></div>
     </div>
 
@@ -171,52 +174,74 @@
     <!-- Phân tích lỗi (Modal khi sai) -->
     <div id="feedback-modal" class="modal-overlay">
         <div class="modal-card">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🔍</div>
-            <h2 style="color: var(--danger); margin-bottom: 10px;">Ồ! Cần xem lại rồi...</h2>
+            <div id="modal-icon" style="font-size: 3rem; margin-bottom: 10px;">🔍</div>
+            <h2 id="modal-title" style="color: var(--danger); margin-bottom: 10px;">Ồ! Cần xem lại rồi...</h2>
             <div id="modal-correct-ans" class="correct-box"></div>
             <div id="modal-exp" class="exp-box"></div>
-            <button class="btn" style="margin-top: 25px;" onclick="closeFeedback()">ĐÃ HIỂU, TIẾP TỤC THÔI! 💪</button>
+            <button class="btn" id="modal-btn" style="margin-top: 25px;" onclick="closeFeedback()">ĐÃ HIỂU, TIẾP TỤC THÔI! 💪</button>
         </div>
     </div>
 
     <script>
-        // Tiện ích xử lý chuỗi tiếng Việt không dấu
         const removeAccents = (str) => {
             return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
         };
 
+        // Helper function to create dummy questions for demo if needed
+        function createDummyQuestions(count, base) {
+            let arr = [...base];
+            while(arr.length < count) {
+                arr.push({ 
+                    type: "mcq", 
+                    q: `Câu hỏi bổ sung số ${arr.length + 1}: Chức năng của máy tính là gì?`, 
+                    options: ["Xử lý thông tin", "Nấu cơm", "Tưới cây"], 
+                    correct: 0, 
+                    exp: "Máy tính dùng để xử lý dữ liệu và thông tin tự động nhé!" 
+                });
+            }
+            return arr.slice(0, count);
+        }
+
+        const BASE_Q1 = [
+            { type: "mcq", q: "Bước đầu tiên trong quy trình giải bài toán trên máy tính là gì?", options: ["Xác định bài toán", "Viết chương trình", "Xây dựng thuật toán"], correct: 0, exp: "Chúng mình phải biết bài toán yêu cầu gì (Input/Output) trước khi làm các bước khác nhé! ✨" },
+            { type: "fill", q: "Sau khi xác định bài toán, chúng ta cần xây dựng _______.", correct: "thuật toán", exp: "Thuật toán chính là 'bí kíp' các bước để giải quyết vấn đề đó! 📜" },
+            { type: "sort", q: "Sắp xếp các bước giải bài toán theo đúng thứ tự chuẩn nhé:", items: ["Viết chương trình", "Xây dựng thuật toán", "Xác định bài toán", "Chạy thử & Kiểm lỗi"], correctOrder: ["Xác định bài toán", "Xây dựng thuật toán", "Viết chương trình", "Chạy thử & Kiểm lỗi"], exp: "Quy trình 4 bước thần thánh: Xác định -> Thuật toán -> Lập trình -> Test. Nhớ kỹ nha! 🧠" },
+            { type: "classify", q: "Phân loại Input và Output của bài toán 'Tính diện tích hình chữ nhật':", pool: ["Chiều dài a", "Chiều rộng b", "Diện tích S", "Chu vi P"], zones: { "Input": ["Chiều dài a", "Chiều rộng b"], "Output": ["Diện tích S"] }, exp: "Cần a và b để tính, kết quả trả về là S. Chu vi P không liên quan ở đây nè! 📏" },
+            { type: "mcq", q: "Viết chương trình là việc sử dụng ngôn ngữ gì để diễn tả thuật toán?", options: ["Ngôn ngữ tự nhiên", "Ngôn ngữ lập trình", "Ngôn ngữ cơ thể"], correct: 1, exp: "Máy tính chỉ hiểu các ngôn ngữ lập trình như Pascal, Python hay C++ thôi! 💻" },
+            { type: "fill", q: "Bước cuối cùng của quy trình là chạy thử và _______ lỗi.", correct: "kiểm", exp: "Viết xong rồi phải kiểm tra xem có lỗi (bug) nào không thì mới dùng được chứ! 🐞" },
+            { type: "mcq", q: "Input của bài toán 'Tìm số lớn nhất trong 2 số a và b' là gì?", options: ["Số a và b", "Số lớn nhất", "Tổng a + b"], correct: 0, exp: "Đầu vào là 2 số cần so sánh nhé! 🔢" },
+            { type: "fill", q: "Cách mô tả thuật toán bằng hình vẽ gọi là sơ đồ _______.", correct: "khối", exp: "Sơ đồ khối giúp chúng mình nhìn thuật toán một cách trực quan bằng hình ảnh! 🖼️" },
+            { type: "mcq", q: "Thuật toán dừng lại khi nào?", options: ["Khi tìm ra kết quả", "Khi hết thời gian", "Khi máy tính bị tắt"], correct: 0, exp: "Một thuật toán đúng phải có tính hữu hạn, nghĩa là phải dừng và cho kết quả! ✅" },
+            { type: "fill", q: "Tính chất của thuật toán: Một dãy _______ các thao tác.", correct: "hữu hạn", exp: "Dãy phải có điểm dừng, không thể chạy mãi mãi được đâu! ⏳" }
+        ];
+
+        const BASE_Q2 = [
+            { type: "mcq", q: "Trong sơ đồ khối, hình chữ nhật biểu thị thao tác gì?", options: ["Nhập/Xuất", "Tính toán/Xử lý", "So sánh"], correct: 1, exp: "Các phép gán, cộng trừ nhân chia đều nằm trong hình chữ nhật này! ➕" },
+            { type: "mcq", q: "Hình thoi trong sơ đồ khối có tác dụng gì?", options: ["Bắt đầu", "Kiểm tra điều kiện", "Kết thúc"], correct: 1, exp: "Hình thoi dùng để rẽ nhánh: Đúng thì đi một đường, Sai đi một đường khác! 💎" },
+            { type: "sort", q: "Sắp xếp thứ tự các khối để nhập 2 số a, b và tính tổng S:", items: ["Xuất S", "Nhập a, b", "S = a + b", "Bắt đầu"], correctOrder: ["Bắt đầu", "Nhập a, b", "S = a + b", "Xuất S"], exp: "Phải bắt đầu, sau đó mới có dữ liệu để tính toán và cuối cùng mới đưa kết quả ra! ➕" },
+            { type: "fill", q: "Hình _______ dùng để biểu thị thao tác Nhập/Xuất dữ liệu.", correct: "bình hành", exp: "Nhớ nhé, cứ Input hay Output thì vẽ hình bình hành cho đẹp và đúng quy ước! 📐" },
+            { type: "classify", q: "Phân loại các khối chức năng trong sơ đồ khối:", pool: ["Hình thoi", "Hình chữ nhật", "Hình bình hành", "Hình Elip"], zones: { "Xử lý/Điều kiện": ["Hình thoi", "Hình chữ nhật"], "Vào/Ra/Khởi đầu": ["Hình bình hành", "Hình Elip"] }, exp: "Mỗi hình có một nhiệm vụ riêng, đừng nhầm lẫn nha! 🎨" },
+            { type: "fill", q: "Khối hình Elip dùng để ghi 'Bắt đầu' hoặc '_______'.", correct: "Kết thúc", exp: "Điểm khởi đầu và điểm dừng chân đều nằm trong hình Elip bo tròn này! 🏁" },
+            { type: "mcq", q: "Lỗi cú pháp thường xảy ra ở bước nào?", options: ["Xây dựng thuật toán", "Viết chương trình", "Xác định bài toán"], correct: 1, exp: "Lỗi cú pháp là do mình gõ sai quy định của ngôn ngữ lập trình đó! ⌨️" },
+            { type: "fill", q: "Chạy thử giúp chúng ta phát hiện ra các _______ logic.", correct: "lỗi", exp: "Nhiều khi code chạy được nhưng kết quả sai, đó là lỗi logic cần tìm! 🔍" },
+            { type: "mcq", q: "Khi giải bài toán, ta nên ưu tiên thuật toán nào?", options: ["Thuật toán đơn giản nhất", "Thuật toán nhanh và tốn ít bộ nhớ", "Thuật toán dài nhất"], correct: 1, exp: "Nhanh - Gọn - Nhẹ luôn là tiêu chí hàng đầu của dân Tin học! 🚀" }
+        ];
+
         const QUESTIONS = {
-            level1: [
-                { type: "mcq", q: "Bước đầu tiên trong quy trình giải bài toán trên máy tính là gì?", options: ["Xác định bài toán", "Viết chương trình", "Xây dựng thuật toán"], correct: 0, exp: "Chúng mình phải biết bài toán yêu cầu gì (Input/Output) trước khi làm các bước khác nhé! ✨" },
-                { type: "fill", q: "Sau khi xác định bài toán, chúng ta cần xây dựng _______.", correct: "thuật toán", exp: "Thuật toán chính là 'bí kíp' các bước để giải quyết vấn đề đó! 📜" },
-                { type: "sort", q: "Sắp xếp các bước giải bài toán theo đúng thứ tự chuẩn nhé:", items: ["Viết chương trình", "Xây dựng thuật toán", "Xác định bài toán", "Chạy thử & Kiểm lỗi"], correctOrder: ["Xác định bài toán", "Xây dựng thuật toán", "Viết chương trình", "Chạy thử & Kiểm lỗi"], exp: "Quy trình 4 bước thần thánh: Xác định -> Thuật toán -> Lập trình -> Test. Nhớ kỹ nha! 🧠" },
-                { type: "classify", q: "Phân loại Input và Output của bài toán 'Tính diện tích hình chữ nhật':", pool: ["Chiều dài a", "Chiều rộng b", "Diện tích S", "Chu vi P"], zones: { "Input": ["Chiều dài a", "Chiều rộng b"], "Output": ["Diện tích S"] }, exp: "Cần a và b để tính, kết quả trả về là S. Chu vi P không liên quan ở đây nè! 📏" },
-                { type: "mcq", q: "Viết chương trình là việc sử dụng ngôn ngữ gì để diễn tả thuật toán?", options: ["Ngôn ngữ tự nhiên", "Ngôn ngữ lập trình", "Ngôn ngữ cơ thể"], correct: 1, exp: "Máy tính chỉ hiểu các ngôn ngữ lập trình như Pascal, Python hay C++ thôi! 💻" },
-                { type: "fill", q: "Bước cuối cùng của quy trình là chạy thử và _______ lỗi.", correct: "kiểm", exp: "Viết xong rồi phải kiểm tra xem có lỗi (bug) nào không thì mới dùng được chứ! 🐞" },
-                { type: "mcq", q: "Input của bài toán 'Tìm số lớn nhất trong 2 số a và b' là gì?", options: ["Số a và b", "Số lớn nhất", "Tổng a + b"], correct: 0, exp: "Đầu vào là 2 số cần so sánh nhé! 🔢" },
-                { type: "fill", q: "Cách mô tả thuật toán bằng hình vẽ gọi là sơ đồ _______.", correct: "khối", exp: "Sơ đồ khối giúp chúng mình nhìn thuật toán một cách trực quan bằng hình ảnh! 🖼️" },
-                { type: "mcq", q: "Thuật toán dừng lại khi nào?", options: ["Khi tìm ra kết quả", "Khi hết thời gian", "Khi máy tính bị tắt"], correct: 0, exp: "Một thuật toán đúng phải có tính hữu hạn, nghĩa là phải dừng và cho kết quả! ✅" },
-                { type: "fill", q: "Tính chất của thuật toán: Một dãy _______ các thao tác.", correct: "hữu hạn", exp: "Dãy phải có điểm dừng, không thể chạy mãi mãi được đâu! ⏳" }
-            ],
-            level2: [
-                { type: "mcq", q: "Trong sơ đồ khối, hình chữ nhật biểu thị thao tác gì?", options: ["Nhập/Xuất", "Tính toán/Xử lý", "So sánh"], correct: 1, exp: "Các phép gán, cộng trừ nhân chia đều nằm trong hình chữ nhật này! ➕" },
-                { type: "mcq", q: "Hình thoi trong sơ đồ khối có tác dụng gì?", options: ["Bắt đầu", "Kiểm tra điều kiện", "Kết thúc"], correct: 1, exp: "Hình thoi dùng để rẽ nhánh: Đúng thì đi một đường, Sai đi một đường khác! 💎" },
-                { type: "sort", q: "Sắp xếp thứ tự các khối để nhập 2 số a, b và tính tổng S:", items: ["Xuất S", "Nhập a, b", "S = a + b", "Bắt đầu"], correctOrder: ["Bắt đầu", "Nhập a, b", "S = a + b", "Xuất S"], exp: "Phải bắt đầu, sau đó mới có dữ liệu để tính toán và cuối cùng mới đưa kết quả ra! ➕" },
-                { type: "fill", q: "Hình _______ dùng để biểu thị thao tác Nhập/Xuất dữ liệu.", correct: "bình hành", exp: "Nhớ nhé, cứ Input hay Output thì vẽ hình bình hành cho đẹp và đúng quy ước! 📐" },
-                { type: "classify", q: "Phân loại các khối chức năng trong sơ đồ khối:", pool: ["Hình thoi", "Hình chữ nhật", "Hình bình hành", "Hình Elip"], zones: { "Xử lý/Điều kiện": ["Hình thoi", "Hình chữ nhật"], "Vào/Ra/Khởi đầu": ["Hình bình hành", "Hình Elip"] }, exp: "Mỗi hình có một nhiệm vụ riêng, đừng nhầm lẫn nha! 🎨" },
-                { type: "fill", q: "Khối hình Elip dùng để ghi 'Bắt đầu' hoặc '_______'.", correct: "Kết thúc", exp: "Điểm khởi đầu và điểm dừng chân đều nằm trong hình Elip bo tròn này! 🏁" },
-                { type: "mcq", q: "Lỗi cú pháp thường xảy ra ở bước nào?", options: ["Xây dựng thuật toán", "Viết chương trình", "Xác định bài toán"], correct: 1, exp: "Lỗi cú pháp là do mình gõ sai quy định của ngôn ngữ lập trình đó! ⌨️" },
-                { type: "fill", q: "Chạy thử giúp chúng ta phát hiện ra các _______ logic.", correct: "lỗi", exp: "Nhiều khi code chạy được nhưng kết quả sai, đó là lỗi logic cần tìm! 🔍" },
-                { type: "mcq", q: "Khi giải bài toán, ta nên ưu tiên thuật toán nào?", options: ["Thuật toán đơn giản nhất", "Thuật toán nhanh và tốn ít bộ nhớ", "Thuật toán dài nhất"], correct: 1, exp: "Nhanh - Gọn - Nhẹ luôn là tiêu chí hàng đầu của dân Tin học! 🚀" }
-            ]
+            level1: createDummyQuestions(10, BASE_Q1),
+            level2: createDummyQuestions(15, BASE_Q2),
+            level3: createDummyQuestions(20, []),
+            level4: createDummyQuestions(25, [])
         };
 
         let state = {
             name: "", score: 0, level: 0, qIdx: 0,
+            correctCount: 0,
             unlocked: [true, false, false, false],
             currentQuestions: [],
             tempOrder: [],
-            classifyData: { current: {} }
+            classifyData: { current: {} },
+            showingResult: false
         };
 
         function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
@@ -236,10 +261,11 @@
             const counts = [10, 15, 20, 25];
             grid.innerHTML = titles.map((t, i) => `
                 <div class="map-node ${state.unlocked[i] ? 'active' : 'locked'}" onclick="enterLevel(${i})">
+                    ${!state.unlocked[i] ? '<div class="lock-icon">🔒</div>' : ''}
                     <div style="font-size: 3rem; margin-bottom:10px;">${['🌱','⚙️','📚','🏆'][i]}</div>
                     <div style="font-weight: 800; font-size: 1.2rem; color: var(--primary-dark);">ẢI ${i+1}</div>
                     <div style="font-size: 0.9rem; font-weight: 600; opacity: 0.8;">${t}</div>
-                    <div style="font-size: 0.8rem; color: var(--secondary); margin-top: 5px;">${counts[i] || 10} câu hỏi</div>
+                    <div style="font-size: 0.8rem; color: var(--secondary); margin-top: 5px;">${counts[i]} câu hỏi</div>
                 </div>
             `).join('');
         }
@@ -248,7 +274,9 @@
             if(!state.unlocked[idx]) return;
             state.level = idx;
             state.qIdx = 0;
-            let rawQ = QUESTIONS[`level${idx+1}`] || QUESTIONS.level1;
+            state.correctCount = 0;
+            state.showingResult = false;
+            let rawQ = QUESTIONS[`level${idx+1}`];
             state.currentQuestions = shuffle([...rawQ]);
             document.getElementById('map-screen').style.display = 'none';
             document.getElementById('quiz-screen').style.display = 'block';
@@ -289,7 +317,6 @@
                     if(wIdx < words.length - 1) html += `<div class="char-space"></div>`;
                 });
                 html += `</div>`;
-                action.style.display = "block";
             }
             else if(q.type === 'sort') {
                 state.tempOrder = shuffle([...q.items]);
@@ -323,7 +350,6 @@
             }
         }
 
-        // --- Logic Xử lý Fill-in-the-blank Ô vuông ---
         function handleCharInput(el) {
             if(el.value) {
                 const next = el.nextElementSibling;
@@ -334,10 +360,8 @@
                     if(afterSpace) afterSpace.focus();
                 }
             }
-            // Tự động kiểm tra nếu đã điền đủ hết các ô
             const allInputs = Array.from(document.querySelectorAll('.char-input'));
             if(allInputs.every(input => input.value !== "")) {
-                // Đợi một chút để người dùng thấy ký tự cuối cùng
                 setTimeout(() => checkComplexAnswer(), 300);
             }
         }
@@ -356,7 +380,6 @@
 
         function getFillValue() {
             const inputs = document.querySelectorAll('.char-input');
-            const wrap = document.getElementById('fill-wrap');
             let result = "";
             let idx = 0;
             const words = state.currentQuestions[state.qIdx].correct.split(' ');
@@ -370,12 +393,12 @@
             return result;
         }
 
-        // --- Các Logic khác giữ nguyên ---
         function checkMcq(isCorrect, btn) {
             const q = state.currentQuestions[state.qIdx];
             if(isCorrect) {
                 btn.classList.add('correct-flash');
                 state.score += 10;
+                state.correctCount++;
                 document.getElementById('hud-score').innerText = state.score;
                 setTimeout(() => nextStep(), 400);
             } else {
@@ -451,6 +474,7 @@
 
             if(isCorrect) {
                 state.score += 10;
+                state.correctCount++;
                 document.getElementById('hud-score').innerText = state.score;
                 nextStep();
             } else {
@@ -460,6 +484,22 @@
 
         function showFeedback(correct, ans, exp) {
             const modal = document.getElementById('feedback-modal');
+            const title = document.getElementById('modal-title');
+            const icon = document.getElementById('modal-icon');
+            const btn = document.getElementById('modal-btn');
+
+            if(correct) {
+                icon.innerText = "🎉";
+                title.innerText = "CHÚC MỪNG!";
+                title.style.color = "var(--primary)";
+                btn.innerText = "QUAY LẠI BẢN ĐỒ 🗺️";
+            } else {
+                icon.innerText = "🔍";
+                title.innerText = "Ồ! Cần xem lại rồi...";
+                title.style.color = "var(--danger)";
+                btn.innerText = "ĐÃ HIỂU, TIẾP TỤC THÔI! 💪";
+            }
+
             document.getElementById('modal-correct-ans').innerHTML = `💡 Đáp án đúng là:<br><span style="font-size:1.4rem; color:var(--primary-dark)">${ans.toUpperCase()}</span>`;
             document.getElementById('modal-exp').innerText = exp;
             modal.style.display = 'flex';
@@ -467,18 +507,50 @@
 
         function closeFeedback() {
             document.getElementById('feedback-modal').style.display = 'none';
-            nextStep();
+            if(state.showingResult) {
+                backToMap();
+            } else {
+                nextStep();
+            }
         }
 
         function nextStep() {
             state.qIdx++;
             if(state.qIdx >= state.currentQuestions.length) {
-                alert(`🎉 Xịn quá! Bạn đã hoàn thành ải này.\nSố điểm tích lũy: ${state.score} XP.`);
-                if(state.level < 3) state.unlocked[state.level + 1] = true;
-                backToMap();
+                showFinalResult();
             } else {
                 renderQuestion();
             }
+        }
+
+        function showFinalResult() {
+            state.showingResult = true;
+            const total = state.currentQuestions.length;
+            const percent = (state.correctCount / total) * 100;
+            const passed = percent >= 70;
+            
+            const modal = document.getElementById('feedback-modal');
+            const title = document.getElementById('modal-title');
+            const icon = document.getElementById('modal-icon');
+            const ansBox = document.getElementById('modal-correct-ans');
+            const expBox = document.getElementById('modal-exp');
+            const btn = document.getElementById('modal-btn');
+
+            icon.innerText = passed ? "🏆" : "📉";
+            title.innerText = passed ? "ẢI TIẾP THEO ĐÃ MỞ!" : "CHƯA ĐỦ ĐIỀU KIỆN...";
+            title.style.color = passed ? "var(--primary)" : "var(--danger)";
+            
+            ansBox.innerHTML = `Bạn đúng được <b>${state.correctCount}/${total}</b> câu (${percent.toFixed(1)}%)`;
+            expBox.innerText = passed ? 
+                "Tuyệt vời! Bạn đã vượt qua thử thách với kết quả xuất sắc. Hãy chinh phục ải tiếp theo nhé!" : 
+                "Tiếc quá, bạn cần đúng ít nhất 70% để mở khóa ải mới. Hãy thử lại để rèn luyện thêm kiến thức nhé!";
+            
+            if(passed && state.level < 3) {
+                state.unlocked[state.level + 1] = true;
+            }
+            
+            btn.innerText = "QUAY LẠI BẢN ĐỒ 🗺️";
+            modal.style.display = 'flex';
         }
 
         function backToMap() {
